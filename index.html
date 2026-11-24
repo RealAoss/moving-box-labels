@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Moving Box Labels</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#eef3ef;color:#192d26;font:16px/1.5 "Segoe UI",sans-serif}main{max-width:760px;margin:5vh auto;padding:clamp(20px,5vw,48px);background:white;border-top:6px solid #226647;border-radius:8px}h1{font-size:clamp(30px,5vw,48px);letter-spacing:-.045em;line-height:1.05;margin:0 0 18px}p{color:#354c41}label{display:block;font-weight:600;margin:14px 0}.pair{display:grid;grid-template-columns:1fr 1fr;gap:18px}input:not([type=checkbox]),select,textarea{display:block;width:100%;padding:10px;border:1px solid #789a89;border-radius:5px;font:inherit;background:white}button{padding:10px 16px;background:#175e40;color:white;border:0;border-radius:6px;font:inherit;cursor:pointer}button:disabled{opacity:.45}canvas{max-width:100%;height:auto}li{margin:.5em 0}.small{padding:3px 8px;font-size:.85em;margin-left:8px}article{border:2px solid #244b37;border-radius:6px;padding:18px;margin:14px 0;break-inside:avoid;overflow-wrap:anywhere}article h2{margin:2px 0}article p{white-space:pre-wrap}@media(max-width:480px){.pair{grid-template-columns:1fr;gap:0}}@media print{body,main{background:white;margin:0;padding:0;border:0;max-width:none}main>:not(#labels),article button{display:none}article{margin:0 0 12mm}}</style>
+<main><h1>Moving Box Labels</h1><p>Make printable box labels with a room, contents and handling instructions. Print the batch or save it as a PDF using the print dialog.</p><form id="entry"><div class="pair"><label>Box number<input id="number" type="number" min="1" step="1" value="1" required></label><label>Destination room<input id="room" placeholder="Kitchen" required maxlength="80"></label></div><label>Contents<textarea id="contents" placeholder="Plates, bowls, mugs" required maxlength="350"></textarea></label><label><input type="checkbox" id="fragile"> Fragile · handle with care</label><button>Add label</button></form><p id="status" role="status">No labels yet.</p><div id="labels"></div><button id="print" disabled>Print labels</button></main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+
+const boxes=[];
+function render(){
+  $('labels').replaceChildren();
+  boxes.forEach((b,i)=>{
+    const card=document.createElement('article');
+    for(const [tag,txt] of [['small','BOX '+b.number],['h2',b.room],['p',b.contents]]){
+      const el=document.createElement(tag);el.textContent=txt;card.append(el)
+    }
+    if(b.fragile){const note=document.createElement('strong');note.textContent='FRAGILE';card.append(note)}
+    const remove=document.createElement('button');remove.textContent='Remove';remove.className='small';remove.onclick=()=>{boxes.splice(i,1);render()};
+    card.append(remove);$('labels').append(card);
+  });
+  $('print').disabled=!boxes.length;$('status').textContent=boxes.length+' label'+(boxes.length===1?'':'s')+' ready.';
+}
+$('entry').onsubmit=e=>{
+  e.preventDefault();const number=$('number').valueAsNumber,room=$('room').value.trim(),contents=$('contents').value.trim();
+  if(!room||!contents||boxes.some(b=>b.number===number)){$('status').textContent='Use a unique box number and fill in the room and contents.';return}
+  boxes.push({number,room,contents,fragile:$('fragile').checked});
+  $('number').value=Math.max(...boxes.map(b=>b.number))+1;$('contents').value='';$('fragile').checked=false;render()
+};$('print').onclick=()=>window.print();
+</script></html>
